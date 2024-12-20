@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface ClientDao extends JpaRepository<Customer, Long> {
+public interface CustomerDao extends JpaRepository<Customer, Long> {
     @Query("SELECT c FROM Customer c WHERE c.dui = ?1")
     Optional<Customer> findByDui(String dui);
 }

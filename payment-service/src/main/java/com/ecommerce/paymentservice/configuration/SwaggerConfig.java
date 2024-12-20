@@ -18,7 +18,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()
-                .group("product-service")
+                .group("payment-service")
                 .addOperationCustomizer(customGlobalHeaders())
                 .packagesToScan("com.ecommerce.paymentservice.controller",
                         "com.ecommerce.paymentservice.domain.dto")
@@ -28,8 +28,8 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI springShopOpenAPI() {
         return new OpenAPI()
-                .info(new Info().title("Product Service API")
-                        .description("Service Integration for external product service.")
+                .info(new Info().title("Payment Service API")
+                        .description("Payment Service process and save it on Postgresql.")
                         .version("v1.0.0")
                         .license(new License().name("Josias").url("https://josiasalvarenga.com")))
                 .externalDocs(new ExternalDocumentation());

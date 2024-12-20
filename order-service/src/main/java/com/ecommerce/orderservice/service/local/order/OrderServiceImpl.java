@@ -1,10 +1,12 @@
-package com.ecommerce.orderservice.service.order;
+package com.ecommerce.orderservice.service.local.order;
 
 import com.ecommerce.orderservice.common.exception.GenericException;
 import com.ecommerce.orderservice.common.utils.date.DateUtils;
 import com.ecommerce.orderservice.common.utils.log.MdcUtil;
-import com.ecommerce.orderservice.domain.dao.ClientDao;
+import com.ecommerce.orderservice.domain.dao.CustomerDao;
 import com.ecommerce.orderservice.domain.dao.OrderDao;
+import com.ecommerce.orderservice.domain.dto.client.payment.PaymentStatus;
+import com.ecommerce.orderservice.domain.dto.client.payment.PaymentStatusRequestDto;
 import com.ecommerce.orderservice.domain.model.Customer;
 import com.ecommerce.orderservice.domain.model.Order;
 import com.ecommerce.orderservice.domain.model.OrderDetail;
@@ -21,6 +23,7 @@ import com.ecommerce.orderservice.service.client.product.ProductClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -33,17 +36,51 @@ import java.util.UUID;
 @Slf4j
 public class OrderServiceImpl implements OrderService {
     private final OrderDao orderDao;
-    private final ClientDao clientDao;
+    private final CustomerDao customerDao;
     private final ProductClient productClient;
     private final PaymentClient paymentClient;
+
+    @Override
+    public List<OrderResponseDto> getCustomerOrders(Long customerId) {
+        List<Order> orders = orderDao.findByCustomerId(customerId);
+
+        if (orders.isEmpty()) {
+            throw new GenericException(HttpStatus.NOT_FOUND.value(), "getCustomerOrders", "No orders found for this customer", null);
+        }
+        log.info("Orders found for customer: {}", customerId);
+        return orders.stream()
+                .map(order -> OrderResponseDto.builder()
+                        .id(order.getId())
+                        .orderDate(order.getOrderDate())
+                        .status(OrderStatus.valueOf(order.getStatus()))
+                        .totalAmount(order.getTotalAmount())
+                        .orderDetails(order.getOrderDetails().stream()
+                                .map(this::getOrderDetailResponseDto)
+                                .toList())
+                        .build())
+                .toList();
+    }
+
+    @Override
+    public OrderResponseDto updateOrderPaymentStatus(Long orderId, PaymentStatusRequestDto paymentStatusRequestDto) {
+        Order order = orderDao.findById(orderId)
+                .orElseThrow( () -> new GenericException(HttpStatus.NOT_FOUND.value(), "updateOrderPaymentStatus", "No order data found", null));
+
+        PaymentResponseDto payment = paymentClient.updatePaymentStatus(orderId, paymentStatusRequestDto);
+
+        order.setStatus(paymentStatusRequestDto.getStatus() == PaymentStatus.DECLINED ? OrderStatus.PAYMENT_FAILED.name() : OrderStatus.SUCCESS.name());
+        orderDao.save(order);
+        log.info("Order payment status updated: {}", order.getReferenceNumber());
+        return getOrderResponseDto(order, payment);
+    }
 
     @Override
     public OrderResponseDto createOrder(OrderRequestDto orderRequestDto) {
         // verify products exist
         List<ProductResponseDto> products = verifyProductsExist(orderRequestDto);
 
-        var client = clientDao.findByDui(orderRequestDto.getClient().getDui())
-                .orElseGet(() -> clientDao.save(Customer.builder()
+        var client = customerDao.findByDui(orderRequestDto.getClient().getDui())
+                .orElseGet(() -> customerDao.save(Customer.builder()
                         .dui(orderRequestDto.getClient().getDui())
                         .email(orderRequestDto.getClient().getEmail())
                         .name(orderRequestDto.getClient().getName())
@@ -93,6 +130,10 @@ public class OrderServiceImpl implements OrderService {
 
         PaymentResponseDto payment = paymentClient.getPaymentByOrderId(id);
 
+        return getOrderResponseDto(order, payment);
+    }
+
+    private OrderResponseDto getOrderResponseDto(Order order, PaymentResponseDto payment) {
         return OrderResponseDto.builder()
                 .id(order.getId())
                 .orderDate(order.getOrderDate())

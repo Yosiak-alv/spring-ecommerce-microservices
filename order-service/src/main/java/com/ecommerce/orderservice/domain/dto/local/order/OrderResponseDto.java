@@ -18,6 +18,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrderResponseDto {
     private Long id;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private CustomerResponseDto client;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private PaymentResponseDto payment;

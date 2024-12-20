@@ -3,11 +3,8 @@ package com.ecommerce.paymentservice.service.payment;
 import com.ecommerce.paymentservice.common.exception.GenericException;
 import com.ecommerce.paymentservice.common.utils.date.DateUtils;
 import com.ecommerce.paymentservice.domain.dao.TransactionalDetailsDao;
+import com.ecommerce.paymentservice.domain.dto.payment.*;
 import com.ecommerce.paymentservice.domain.model.TransactionalDetails;
-import com.ecommerce.paymentservice.domain.dto.payment.PaymentMethod;
-import com.ecommerce.paymentservice.domain.dto.payment.PaymentRequestDto;
-import com.ecommerce.paymentservice.domain.dto.payment.PaymentResponseDto;
-import com.ecommerce.paymentservice.domain.dto.payment.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -59,9 +56,30 @@ public class PaymentServiceImpl implements PaymentService{
                         .orderId(transactionalDetails.getOrderId())
                         .amount(transactionalDetails.getAmount())
                         .paymentMethod(PaymentMethod.valueOf(transactionalDetails.getPaymentMethod()))
+                        .status(PaymentStatus.valueOf(transactionalDetails.getPaymentStatus()))
                         .paymentDate(transactionalDetails.getPaymentDate())
                         .traceId(transactionalDetails.getTraceId())
                         .build())
                 .orElseThrow( () -> new GenericException(HttpStatus.NOT_FOUND.value(), "getPaymentByOrderId", "No payment transaction data found", null));
+    }
+
+    @Override
+    public PaymentResponseDto updatePaymentStatus(Long orderId, PaymentStatusRequestDto paymentStatusRequestDto) {
+        log.info("updatePaymentStatus for orderId: {}", orderId);
+        return transactionalDetailsDao.findByOrderId(orderId)
+                .map(transactionalDetails -> {
+                    transactionalDetails.setPaymentStatus(paymentStatusRequestDto.getStatus().name());
+                    TransactionalDetails updatedTransaction = transactionalDetailsDao.save(transactionalDetails);
+                    return PaymentResponseDto.builder()
+                            .id(updatedTransaction.getId())
+                            .orderId(updatedTransaction.getOrderId())
+                            .amount(updatedTransaction.getAmount())
+                            .paymentMethod(PaymentMethod.valueOf(updatedTransaction.getPaymentMethod()))
+                            .status(PaymentStatus.valueOf(updatedTransaction.getPaymentStatus()))
+                            .paymentDate(updatedTransaction.getPaymentDate())
+                            .traceId(updatedTransaction.getTraceId())
+                            .build();
+                })
+                .orElseThrow(() -> new GenericException(HttpStatus.NOT_FOUND.value(), "updatePaymentStatus", "No payment transaction data found", null));
     }
 }

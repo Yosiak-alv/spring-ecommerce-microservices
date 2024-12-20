@@ -1,5 +1,6 @@
 package com.ecommerce.orderservice.service.client.base;
 
+import com.ecommerce.orderservice.common.utils.log.MdcUtil;
 import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -27,28 +28,22 @@ public class GenericClientImpl implements GenericClient {
 
     @Override
     public ResponseEntity<String> get(String url, HttpEntity<String> entity){
-        return call(url, entity, HttpMethod.GET, null);
-    }
-    @Override
-    public ResponseEntity<String> getWithHeaders(String url, HttpEntity<String> entity, Map<String, List<String>> headerElements){
-        return call(url, entity, HttpMethod.GET, headerElements);
+        return call(url, entity, HttpMethod.GET);
     }
 
     @Override
     public <T> ResponseEntity<String> post(String url, T entity) {
-        return call(url, entity, HttpMethod.POST, null);
+        return call(url, entity, HttpMethod.POST);
     }
 
     @Override
-    public <T> ResponseEntity<String> postWithHeaders(String url, T entity, Map<String, List<String>> headerElements) {
-        return call(url, entity, HttpMethod.POST, headerElements);
+    public <T> ResponseEntity<String> patch(String url, T entity) {
+        return call(url, entity, HttpMethod.PATCH);
     }
 
-    private ResponseEntity<String> call(String url, Object entity, HttpMethod method, Map<String, List<String>> headerElements){
+    private ResponseEntity<String> call(String url, Object entity, HttpMethod method){
         HttpHeaders headers = new HttpHeaders();
-        if (headerElements != null && !headerElements.isEmpty()) {
-            headers.addAll(CollectionUtils.toMultiValueMap(headerElements));
-        }
+        headers.add("trace-id", MdcUtil.getMdcTraceId());
         HttpEntity<Object> httpEntity = new HttpEntity<>(entity, headers);
         try {
             return restTemplate.exchange(url, method, httpEntity, String.class);
