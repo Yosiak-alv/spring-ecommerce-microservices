@@ -48,6 +48,6 @@ springdoc:
 
 integration:
   product-service:
-    url: http://localhost:8081/product-service/api/v1
+    url: http://product-service:8081/product-service/api/v1
   payment-service:
-    url: http://localhost:8082/payment-service/api/v1
+    url: http://payment-service:8082/payment-service/api/v1

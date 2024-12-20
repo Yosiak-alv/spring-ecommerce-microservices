@@ -1,6 +1,7 @@
 
 services:
   product-service:
+    container_name: product-service
     build:
       context: ./product-service
       dockerfile: Dockerfile
@@ -13,8 +14,11 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - app-network
 
   payment-service:
+    container_name: payment-service
     build:
       context: ./payment-service
       dockerfile: Dockerfile
@@ -32,6 +36,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - app-network
 
   payment-db:
     image: postgres:latest
@@ -44,15 +50,18 @@ services:
       - "5432:5432"
     volumes:
       - payment-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
   order-service:
+    container_name: order-service
     build:
       context: ./order-service
       dockerfile: Dockerfile
     ports:
       - "8083:8083"
     environment:
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://order-db:5432/db_order_service
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -63,6 +72,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - app-network
 
   order-db:
     image: postgres:latest
@@ -75,7 +86,13 @@ services:
       - "5433:5432"
     volumes:
       - order-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
 volumes:
   payment-db-data:
   order-db-data:
+
+networks:
+  app-network:
+    driver: bridge
