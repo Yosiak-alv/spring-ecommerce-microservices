@@ -1,0 +1,29 @@
+app:
+  config:
+    rest:
+      connect-timeout: 15000
+      connection-request-timeout: 15000
+      socket-timeout: 15000
+      max-conn-per-route: 5
+      max-conn-total: 5
+
+server:
+  port: 8081
+  servlet:
+    context-path: /product-service
+
+logging:
+  file:
+    name: product-service.log
+  pattern:
+    file: '{''app'':''product-service'',''datetime'': ''%d{yyyy-MM-dd HH:mm:ss}'',
+            ''thread'': ''%thread'', ''level'': ''%-5level'', ''logger'': ''%logger{36}'', ''item'':''%msg''}%n'
+
+springdoc:
+  swagger-ui:
+    path: /swagger/index.html
+    enabled: true
+
+integration:
+  fake-store-api:
+    url: https://fakestoreapi.com

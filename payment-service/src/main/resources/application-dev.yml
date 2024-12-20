@@ -1,0 +1,48 @@
+app:
+  config:
+    rest:
+      connect-timeout: 1000
+      connection-request-timeout: 1000
+      socket-timeout: 1000
+      max-conn-per-route: 5
+      max-conn-total: 5
+
+spring:
+  application:
+    name: payment-service
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+  datasource:
+    hikari:
+      idle-timeout: 300000
+      keepalive-time: 590000
+      max-lifetime: 600000
+      maximum-pool-size: 10
+      minimum-idle: 0
+    password: postgres
+    url: jdbc:postgresql://localhost:5432/db_payment_service
+    username: postgres
+    driver-class-name: org.postgresql.Driver
+
+server:
+  port: 8082
+  servlet:
+    context-path: /payment-service
+
+logging:
+  file:
+    name: payment-service.log
+  pattern:
+    file: '{''app'':''payment-service'',''datetime'': ''%d{yyyy-MM-dd HH:mm:ss}'',
+            ''thread'': ''%thread'', ''level'': ''%-5level'', ''logger'': ''%logger{36}'', ''item'':''%msg''}%n'
+
+springdoc:
+  swagger-ui:
+    path: /swagger/index.html
+    enabled: true
+
